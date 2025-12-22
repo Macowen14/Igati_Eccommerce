@@ -50,8 +50,8 @@ def google_login_callback(request):
         return redirect('http://localhost:5173/login/callback/?error=Notokenfound')
     
 
-    @csrf_exempt
-    def validate_google_token(request):
+@csrf_exempt
+def validate_google_token(request):
         if request.method == 'POST':
             try:
                 data = json.loads(request.body)

@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import Product, Order, Profile 
+# from .models import Product, Order, Profile 
 
 
 class UserSerializer(serializers.ModelSerializer):

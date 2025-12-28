@@ -29,4 +29,5 @@ urlpatterns = [
     path('callback/', google_login_callback, name='google_login_callback'),
     path('api/auth/user/', UserDetailView.as_view(), name='user_detail'),
     path('api/validate-google-token/', validate_google_token, name='validate_google_token'),
+    path('api/sellers/', include('sellers.urls')),
 ]

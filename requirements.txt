@@ -12,3 +12,4 @@ django-cors-headers
 djangorestframework-simplejwt
 psycopg2-binary
 django-environ
+drf-spectacular

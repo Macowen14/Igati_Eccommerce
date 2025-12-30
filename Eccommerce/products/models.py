@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from seller.models import Seller, SellerDocument
+from sellers.models import Seller
 
 
 
@@ -108,10 +108,10 @@ class Support(models.Model):
     )
     
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    support_type=models.CharField(choices=SUPPORT_TYPE, default='general')
+    support_type = models.CharField(max_length=20, choices=SUPPORT_TYPE, default='general')
     subject = models.CharField(max_length=200)
     message = models.TextField()
-    status = models.CharField(choices=STATUS_CHOICES, default='pending') 
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending') 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

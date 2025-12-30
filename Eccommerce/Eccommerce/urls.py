@@ -4,6 +4,7 @@ from products.views import*
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework.routers import DefaultRouter
 from products.views import ProductViewSet, InventoryViewSet,CategoryViewSet, OrderViewSet
+from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
 router = DefaultRouter()
 router.register(r'products', ProductViewSet, basename='product')
@@ -22,4 +23,8 @@ urlpatterns = [
     path('callback/', google_login_callback, name='google_login_callback'),
     path('api/auth/user/', UserDetailView.as_view(), name='user_detail'),
     path('api/validate-google-token/', validate_google_token, name='validate_google_token'),
+    path('api/sellers/', include('sellers.urls')),
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('api/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 ]

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Product, inventory, category, Order, order_product, Profile, Seller
+from .models import Product, inventory, category, Order, order_product, Profile
 
 # 1. Define Inlines first so they can be used in Admins below
 class OrderProductInline(admin.TabularInline):
@@ -43,9 +43,7 @@ class OrderAdmin(admin.ModelAdmin):
 class ProfileAdmin(admin.ModelAdmin):
     list_display = ['user', 'phone_number', 'location', 'updated_at']
 
-@admin.register(Seller)
-class SellerAdmin(admin.ModelAdmin):
-    list_display = ['user', 'business_name', 'is_verified']
+
 
 # Register order_product separately if you want to see the full list of items sold
 @admin.register(order_product)

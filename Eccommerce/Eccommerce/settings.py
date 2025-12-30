@@ -21,7 +21,7 @@ env = environ.Env()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # reading .env file
-environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
+environ.Env.read_env(os.path.join(BASE_DIR.parent, '.env'))
 
 
 # Quick-start development settings - unsuitable for production
@@ -45,7 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'MarketplaceApp',
+    'products',
     'corsheaders',
     'rest_framework',
     'rest_framework.authtoken',
@@ -54,7 +54,9 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
     'rest_framework_simplejwt',
-    'drf_spectacular',]
+    'drf_spectacular',
+    'sellers',
+    ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

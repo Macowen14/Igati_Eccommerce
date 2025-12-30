@@ -10,6 +10,12 @@ from django.contrib.auth import get_user_model
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
+from rest_framework import viewsets, permissions
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from .models import Product, inventory, category, Order
+from .serializers import ProductSerializer, ProductListSerializer, InventorySerializer, CategorySerializer, OrderSerializer
+
 
 User = get_user_model()
 
@@ -65,3 +71,123 @@ def validate_google_token(request):
                 return JsonResponse({'detail': 'Invalid JSON.'}, status=400)
             return JsonResponse({'detail': 'Method not allowed.'}, status=405)  
         
+
+class IsAdminOrReadOnly(permissions.BasePermission):
+    """Only admin can create/update/delete"""
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return request.user and request.user.is_staff
+
+
+class ProductViewSet(viewsets.ModelViewSet):
+    queryset = Product.objects.all()
+    permission_classes = [IsAdminOrReadOnly]
+    
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return ProductListSerializer
+        return ProductSerializer
+    
+    def get_queryset(self):
+        queryset = Product.objects.all()
+        
+        # Filter by category
+        category = self.request.query_params.get('category', None)
+        if category:
+            queryset = queryset.filter(category_id=category)
+        
+        # Filter by minimum stock
+        min_stock = self.request.query_params.get('min_stock', None)
+        if min_stock:
+            queryset = queryset.filter(total_stock_quantity__gte=min_stock)
+        
+        # Search by name
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(name__icontains=search)
+        
+        return queryset
+    
+    @action(detail=True, methods=['get'])
+    def sellers(self, request, pk=None):
+        """Get all verified sellers for this product"""
+        product = self.get_object()
+        inventories = product.inventories.filter(is_verified=True)
+        serializer = InventorySerializer(inventories, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'])
+    def low_stock(self, request):
+        """Get products with low total stock (less than 10)"""
+        products = Product.objects.filter(total_stock_quantity__lt=10)
+        serializer = self.get_serializer(products, many=True)
+        return Response(serializer.data)
+
+
+class InventoryViewSet(viewsets.ModelViewSet):
+    queryset = inventory.objects.all()
+    serializer_class = InventorySerializer
+    permission_classes = [permissions.IsAdminUser]  # Only admin can manage inventory
+    
+    def get_queryset(self):
+        queryset = inventory.objects.all()
+        
+        # Filter by product
+        product_id = self.request.query_params.get('product', None)
+        if product_id:
+            queryset = queryset.filter(product_id=product_id)
+        
+        # Filter by seller
+        seller_id = self.request.query_params.get('seller', None)
+        if seller_id:
+            queryset = queryset.filter(seller_id=seller_id)
+        
+        # Filter by verification status
+        is_verified = self.request.query_params.get('verified', None)
+        if is_verified is not None:
+            queryset = queryset.filter(is_verified=is_verified.lower() == 'true')
+        
+        return queryset
+    
+    @action(detail=True, methods=['post'])
+    def verify(self, request, pk=None):
+        """Admin verifies a seller's inventory"""
+        inventory = self.get_object()
+        inventory.is_verified = True
+        inventory.save()
+        serializer = self.get_serializer(inventory)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'])
+    def unverify(self, request, pk=None):
+        """Admin unverifies a seller's inventory"""
+        inventory = self.get_object()
+        inventory.is_verified = False
+        inventory.save()
+        serializer = self.get_serializer(inventory)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'])
+    def pending_verification(self, request):
+        """Get all unverified inventories"""
+        inventories = inventory.objects.filter(is_verified=False)
+        serializer = self.get_serializer(inventories, many=True)
+        return Response(serializer.data)    
+
+class CategoryViewSet(viewsets.ModelViewSet):
+    queryset = category.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = [IsAdminOrReadOnly] 
+
+class OrderViewSet(viewsets.ModelViewSet):
+    serializer_class = OrderSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Users should only see their own orders
+        return Order.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        # Automatically set the user to the logged-in user when creating an order
+        serializer.save(user=self.request.user)    

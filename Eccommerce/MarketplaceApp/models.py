@@ -9,10 +9,10 @@ class Seller(models.Model):
         ('rejected', 'Rejected'),
     )
 
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='seller_profile')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='seller_profile')
     business_name = models.CharField(max_length=255)
     is_verified = models.BooleanField(default=False)
-    verified_at = models.DateTimeField(auto_now=True),
+    verified_at = models.DateTimeField(auto_now=True)
     business_location = models.CharField(max_length=255)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -86,15 +86,15 @@ def save(self, *args, **kwargs):
     
 
 class Profile (models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE),
-    profile_img = models.URLField(blank=True),
-    phone_number = models.CharField(max_length=20),
-    location = models.CharField(max_length=200),
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    profile_img = models.URLField(blank=True)
+    phone_number = models.CharField(max_length=20)
+    location = models.CharField(max_length=200)
     updated_at = models.DateTimeField(auto_now=True)
     
 
 class Order(models.Model):
-    order_product=models.ForeignKey(order_product, on_delete=models.CASCADE)
+    items = models.ForeignKey('order_product', on_delete=models.CASCADE, related_name='parent_order', null=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
     total_quantity = models.PositiveIntegerField()
@@ -103,11 +103,11 @@ class Order(models.Model):
     
     
 class order_product(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE),
-    units=models.CharField(),
-    quantity = models.PositiveIntegerField(),
-    price_at_purchase=models.FloatField(default=0.0, max_length=1000000.00)
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='order_items')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    units = models.CharField(max_length=50)
+    quantity = models.PositiveIntegerField()
+    price_at_purchase = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

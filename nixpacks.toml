@@ -1,8 +1,5 @@
 [phases.setup]
 nixPkgs = ["python3", "gcc", "postgresql"]
 
-[phases.build]
-cmds = ["python -m venv /opt/venv && . /opt/venv/bin/activate && pip install -r requirements.txt"]
-
 [start]
 cmd = "cd Eccommerce && python manage.py migrate && gunicorn --bind 0.0.0.0:8000 Eccommerce.wsgi"

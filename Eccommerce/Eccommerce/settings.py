@@ -31,7 +31,7 @@ environ.Env.read_env(os.path.join(BASE_DIR.parent, '.env'))
 SECRET_KEY = 'django-insecure-$d-jsx@z2i_&e+il&!w6chfxh9@=nf2y=kf--g^h2i5l_dwj!j'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG =True  
+DEBUG=True  
 
 ALLOWED_HOSTS = []
 
@@ -101,7 +101,10 @@ DATABASES = {
         'USER': env('DB_USER', default='postgres'),
         'PASSWORD': env('DB_PASSWORD', default='postgres'),
         'HOST': env('DB_HOST', default='localhost'),
-        'PORT': env('DB_PORT', default='5432'),
+
+        'OPTIONS': {
+            'sslmode': 'require',  # Neon requires SSL
+        },
         'TEST': {
             'NAME': 'test_eccommerce_db',
         },

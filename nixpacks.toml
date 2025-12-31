@@ -2,4 +2,4 @@
 nixPkgs = ["python3", "gcc", "postgresql"]
 
 [start]
-cmd = "cd Eccommerce && python manage.py migrate && gunicorn --bind 0.0.0.0:8000 Eccommerce.wsgi"
+cmd = "cd Eccommerce && python manage.py migrate && gunicorn --bind 0.0.0.0:8080 Eccommerce.wsgi"

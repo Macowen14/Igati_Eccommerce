@@ -14,7 +14,7 @@ from rest_framework import viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import Product, Inventory, Category, Order 
-from .serializers import ProductSerializer, ProductListSerializer, InventorySerializer, CategorySerializer, OrderSerializer
+from .serializers import ProductSerializer, ProductListSerializer, InventorySerializer, CategorySerializer, OrderProductSerializer
 
 
 User = get_user_model()
@@ -192,7 +192,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 
 class OrderViewSet(viewsets.ModelViewSet):
-    serializer_class = OrderSerializer
+    serializer_class = OrderProductSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):

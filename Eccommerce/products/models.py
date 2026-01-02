@@ -2,15 +2,18 @@ from django.db import models
 from django.conf import settings
 from sellers.models import Seller
 
-class category(models.Model):
+class Category(models.Model): 
     name = models.CharField(max_length=200)
     description = models.TextField()
+    
+    def __str__(self):
+        return self.name
 
 class Product(models.Model):
     name = models.CharField(max_length=200)
-    description = models.TextField()# Detailed information of the product
-    slug=models.SlugField(unique=True)
-    category = models.ForeignKey('Category', on_delete=models.SET_NULL, null=True, blank=True)
+    description = models.TextField()
+    slug = models.SlugField(unique=True)
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     total_stock_quantity = models.IntegerField(default=0)
     image = models.URLField(blank=True, null=True)  
@@ -32,28 +35,32 @@ class Product(models.Model):
         self.total_stock_quantity = total
         self.save()     
 
-class inventory(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+
+class Inventory(models.Model): 
+    product = models.ForeignKey(
+        Product, 
+        on_delete=models.CASCADE,
+        related_name='inventories'  
+    )
     seller = models.ForeignKey(Seller, on_delete=models.CASCADE)
     stock = models.PositiveIntegerField()
-    is_verified = models.BooleanField(default=False)  # Admin verification
+    is_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
-class Meta:
-        unique_together = ['product', 'seller']  # One inventory per product-seller pair
+    class Meta: 
+        unique_together = ['product', 'seller']
         verbose_name_plural = "Inventories"
 
-def __str__(self):
-        return f"{self.seller.username} - {self.product.name} ({self.stock})"
+    def __str__(self):  
+        return f"{self.seller.user.username} - {self.product.name} ({self.stock})"
     
-def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs):  
         super().save(*args, **kwargs)
-        # Update total stock in product whenever inventory changes
         self.product.update_total_stock()
     
 
-class Profile (models.Model):
+class Profile(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     profile_img = models.URLField(blank=True)
     phone_number = models.CharField(max_length=20)
@@ -85,7 +92,7 @@ class Payments(models.Model):
     payment_method = models.CharField(max_length=100)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     transaction_id = models.CharField(max_length=100)
-    status=models.CharField(max_length=100)
+    status = models.CharField(max_length=100)
     payload = models.JSONField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -98,7 +105,7 @@ class Support(models.Model):
         ('closed', 'Closed'),
     )
     
-    SUPPORT_TYPE=(
+    SUPPORT_TYPE = (
         ('complain', 'Complain'),
         ('complement', 'Complement'),
     )

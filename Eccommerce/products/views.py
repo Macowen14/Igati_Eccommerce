@@ -2,7 +2,7 @@ from django.shortcuts import redirect
 from django.contrib.auth.models import User
 from rest_framework import generics
 from .serializers import UserSerializer
-from rest_framework.permissions import AllowAny , IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from allauth.socialaccount.models import SocialToken, SocialAccount
 from django.contrib.auth.decorators import login_required
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -13,7 +13,7 @@ import json
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import Product, inventory, category, Order
+from .models import Product, Inventory, Category, Order 
 from .serializers import ProductSerializer, ProductListSerializer, InventorySerializer, CategorySerializer, OrderSerializer
 
 
@@ -25,6 +25,7 @@ class UserCreate(generics.CreateAPIView):
     serializer_class = UserSerializer
     permission_classes = [AllowAny] 
 
+
 class UserDetailView(generics.RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -32,6 +33,7 @@ class UserDetailView(generics.RetrieveAPIView):
 
     def get_object(self):
         return self.request.user    
+
 
 @login_required
 def google_login_callback(request):
@@ -43,7 +45,6 @@ def google_login_callback(request):
     social_account = Social_accounts.first()
     if not social_account:
         return redirect('http://localhost:5173/login/callback/?error=Nosocialaccountfound')
-
 
     token = SocialToken.objects.filter(account=social_account, account__provider='google').first()
 
@@ -58,18 +59,18 @@ def google_login_callback(request):
 
 @csrf_exempt
 def validate_google_token(request):
-        if request.method == 'POST':
-            try:
-                data = json.loads(request.body)
-                google_access_token = data.get('access_token')
-                print("Received Google Access Token:", google_access_token)
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            google_access_token = data.get('access_token')
+            print("Received Google Access Token:", google_access_token)
 
-                if not google_access_token:
-                    return JsonResponse({'detail': 'Access token is required.'}, status=400)
-                return JsonResponse({'detail': 'Token is valid.'}, status=200)
-            except json.JSONDecodeError:
-                return JsonResponse({'detail': 'Invalid JSON.'}, status=400)
-            return JsonResponse({'detail': 'Method not allowed.'}, status=405)  
+            if not google_access_token:
+                return JsonResponse({'detail': 'Access token is required.'}, status=400)
+            return JsonResponse({'detail': 'Token is valid.'}, status=200)
+        except json.JSONDecodeError:
+            return JsonResponse({'detail': 'Invalid JSON.'}, status=400)
+    return JsonResponse({'detail': 'Method not allowed.'}, status=405)  
         
 
 class IsAdminOrReadOnly(permissions.BasePermission):
@@ -93,9 +94,9 @@ class ProductViewSet(viewsets.ModelViewSet):
         queryset = Product.objects.all()
         
         # Filter by category
-        category = self.request.query_params.get('category', None)
-        if category:
-            queryset = queryset.filter(category_id=category)
+        category_id = self.request.query_params.get('category', None)
+        if category_id:
+            queryset = queryset.filter(category_id=category_id)
         
         # Filter by minimum stock
         min_stock = self.request.query_params.get('min_stock', None)
@@ -126,12 +127,12 @@ class ProductViewSet(viewsets.ModelViewSet):
 
 
 class InventoryViewSet(viewsets.ModelViewSet):
-    queryset = inventory.objects.all()
+    queryset = Inventory.objects.all()  
     serializer_class = InventorySerializer
     permission_classes = [permissions.IsAdminUser]  # Only admin can manage inventory
     
     def get_queryset(self):
-        queryset = inventory.objects.all()
+        queryset = Inventory.objects.all()  # ← Fixed: Uppercase
         
         # Filter by product
         product_id = self.request.query_params.get('product', None)
@@ -153,32 +154,42 @@ class InventoryViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def verify(self, request, pk=None):
         """Admin verifies a seller's inventory"""
-        inventory = self.get_object()
-        inventory.is_verified = True
-        inventory.save()
-        serializer = self.get_serializer(inventory)
+        inventory_obj = self.get_object() 
+        inventory_obj.is_verified = True
+        inventory_obj.save()
+        serializer = self.get_serializer(inventory_obj)
         return Response(serializer.data)
     
     @action(detail=True, methods=['post'])
     def unverify(self, request, pk=None):
         """Admin unverifies a seller's inventory"""
-        inventory = self.get_object()
-        inventory.is_verified = False
-        inventory.save()
-        serializer = self.get_serializer(inventory)
+        inventory_obj = self.get_object() 
+        inventory_obj.is_verified = False
+        inventory_obj.save()
+        serializer = self.get_serializer(inventory_obj)
         return Response(serializer.data)
     
     @action(detail=False, methods=['get'])
     def pending_verification(self, request):
         """Get all unverified inventories"""
-        inventories = inventory.objects.filter(is_verified=False)
+        inventories = Inventory.objects.filter(is_verified=False)  
         serializer = self.get_serializer(inventories, many=True)
         return Response(serializer.data)    
 
+
 class CategoryViewSet(viewsets.ModelViewSet):
-    queryset = category.objects.all()
+    queryset = Category.objects.all()  
     serializer_class = CategorySerializer
-    permission_classes = [IsAdminOrReadOnly] 
+    permission_classes = [IsAdminOrReadOnly]
+    
+    @action(detail=True, methods=['get'])
+    def products(self, request, pk=None):
+        """Get all products in this category"""
+        category_obj = self.get_object()
+        products = Product.objects.filter(category=category_obj)
+        serializer = ProductListSerializer(products, many=True)
+        return Response(serializer.data)
+
 
 class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer
@@ -190,4 +201,4 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         # Automatically set the user to the logged-in user when creating an order
-        serializer.save(user=self.request.user)    
+        serializer.save(user=self.request.user)

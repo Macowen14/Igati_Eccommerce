@@ -1,0 +1,10 @@
+
+igati/
+.git/
+.gitignore
+*.pyc
+__pycache__/
+*.sqlite3
+.env
+*.md
+.vscode/

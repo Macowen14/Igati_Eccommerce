@@ -14,7 +14,7 @@ from rest_framework import viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import Product, Inventory, Category, Order 
-from .serializers import ProductSerializer, ProductListSerializer, InventorySerializer, CategorySerializer, OrderProductSerializer
+from .serializers import ProductSerializer, ProductListSerializer, InventorySerializer, CategorySerializer, OrderSerializer
 
 
 User = get_user_model()
@@ -190,15 +190,12 @@ class CategoryViewSet(viewsets.ModelViewSet):
         serializer = ProductListSerializer(products, many=True)
         return Response(serializer.data)
 
-
 class OrderViewSet(viewsets.ModelViewSet):
-    serializer_class = OrderProductSerializer
+    serializer_class = OrderSerializer 
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        # Users should only see their own orders
-        return Order.objects.filter(user=self.request.user)
+        return Order.objects.filter(user=self.request.user).prefetch_related('order_items')
 
     def perform_create(self, serializer):
-        # Automatically set the user to the logged-in user when creating an order
         serializer.save(user=self.request.user)
